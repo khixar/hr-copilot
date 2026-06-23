@@ -1,0 +1,72 @@
+[
+    {
+        "question": "How many years of experience does the candidate have?",
+        "expected_answer": "7+ years",
+        "expected_source_document": "Muhammad Khizar.pdf",
+        "expected_page": 1,
+        "should_retrieve": true
+    },
+    {
+        "question": "Does the candidate have experience in distributed systems?",
+        "expected_answer": "Not explicitly mentioned",
+        "expected_source_document": null,
+        "expected_page": null,
+        "should_retrieve": false
+    },
+    {
+        "question": "Does the candidate have experience in remote settings?",
+        "expected_answer": "Yes, Omni HR and ALL3D are remote companies",
+        "expected_source_document": "Muhammad Khizar.pdf",
+        "expected_page": 1,
+        "should_retrieve": true
+    },
+    {
+        "question": "Does the candidate have experience in building and deploying applications in cloud environments?",
+        "expected_answer": "Yes, ALL3D is a cloud-based application with deployment experience",
+        "expected_source_document": "Muhammad Khizar.pdf",
+        "expected_page": 1,
+        "should_retrieve": true
+    },
+    {
+        "question": "What's the conflict of interest in the agreement?",
+        "expected_answer": "Consultant is not, and during the term of this Agreement shall not become, a party to any agreement or subject to any obligation which would impede or prohibit its proper execution and observance of this Agreement",
+        "expected_source_document": "Independent Contractor Agreement_Agency (3).pdf",
+        "expected_page": 8,
+        "should_retrieve": true
+    },
+    {
+        "question": "Does company has any law for idemnification?",
+        "expected_answer": "Consultant agrees to indemnify and save the Company harmless from any liabilities, claims or demands (including the costs, expenses, and attorneys' fees on account thereof) that may be made: First, by anyone for injuries to persons or damage to property, including theft, resulting from Consultant's acts or omissions or those of persons furnished by Consultant; or second, by persons furnished by Consultant or by any subcontractors used by Consultant for any injuries to persons or damage to property, including theft, resulting from acts or omissions of Consultant or its subcontractors",
+        "expected_source_document": "Independent Contractor Agreement_Agency (3).pdf",
+        "expected_page": 5,
+        "should_retrieve": true
+    },
+    {
+        "question": "What's the notice period for termination of the agreement?",
+        "expected_answer": "14 days",
+        "expected_source_document": "Independent Contractor Agreement_Agency (3).pdf",
+        "expected_page": null,
+        "should_retrieve": true
+    },
+    {
+        "question": "Does candidate have experience in LLM integrations?",
+        "expected_answer": "Yes, candidate has experience in LLM integrations",
+        "expected_source_document": "Muhammad Khizar.pdf",
+        "expected_page": 1,
+        "should_retrieve": true
+    },
+    {
+        "question": "Does user has any AI certification",
+        "expected_answer": "Yes, AWS Certified AI Practitioner certification",
+        "expected_source_document": "Muhammad Khizar.pdf",
+        "expected_page": 3,
+        "should_retrieve": true
+    },
+    {
+        "question": "Does candidate have full stack experience?",
+        "expected_answer": "Not explicitly mentioned",
+        "expected_source_document": "Muhammad Khizar.pdf",
+        "expected_page": null,
+        "should_retrieve": false
+    }
+]
