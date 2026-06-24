@@ -1,0 +1,157 @@
+import asyncio
+import json
+
+from langchain_core.runnables import RunnableConfig
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.agent.state import AgentState
+from app.models.chunk import Chunk
+from app.models.document import Document
+from app.schemas.query import SourceChunk
+from app.services.bm25_service import bm25_search
+from app.services.embedding_service import embed_texts, get_client
+from app.services.reranker_service import rerank
+from app.services.rrf import reciprocal_rank_fusion
+
+_TOP_K = 5
+_MIN_SIMILARITY = 0.25
+
+
+def _db(config: RunnableConfig) -> AsyncSession:
+    return config["configurable"]["db"]
+
+
+async def retrieve(state: AgentState, config: RunnableConfig) -> dict:
+    db = _db(config)
+    question = state["question"]
+    tenant_id = state["tenant_id"]
+    fetch_k = max(_TOP_K * 3, 15)
+
+    query_embedding, bm25_results = await asyncio.gather(
+        embed_texts([question]),
+        bm25_search(db, tenant_id, question, top_k=_TOP_K * 3),
+    )
+    query_embedding = query_embedding[0]
+
+    distance = Chunk.embedding.cosine_distance(query_embedding).label("distance")
+    rows = await db.execute(
+        select(Chunk, Document.title, distance)
+        .join(Document, Chunk.document_id == Document.id)
+        .where(Chunk.tenant_id == tenant_id)
+        .where(Chunk.embedding.isnot(None))
+        .where(distance <= (1 - _MIN_SIMILARITY))
+        .order_by(distance)
+        .limit(fetch_k)
+    )
+    vector_results = rows.all()
+    combined = reciprocal_rank_fusion(vector_results, bm25_results)
+
+    return {
+        "retrieved_chunks": combined,
+        "retrieval_empty": len(combined) == 0,
+    }
+
+
+_CLASSIFY_PROMPT = """You are a retrieval quality classifier for an HR assistant.
+
+Given a question and retrieved document chunks, decide whether the chunks are relevant
+enough to answer the question, or whether this should be escalated (chunks are off-topic,
+too vague, or the question is outside the scope of the available HR documents).
+
+Respond with JSON only:
+{"should_escalate": true/false, "reason": "<one sentence explaining why, or null if not escalating>"}"""
+
+
+async def classify(state: AgentState, config: RunnableConfig) -> dict:
+    if state["retrieval_empty"]:
+        print("[classify] → escalate (retrieval empty)")
+        return {
+            "should_escalate": True,
+            "escalation_reason": "No relevant documents were found for this query.",
+        }
+
+    question = state["question"]
+    chunks = state["retrieved_chunks"]
+    context = "\n\n".join(
+        f"[{i+1}] ({c.document_title}): {c.content[:300]}"
+        for i, c in enumerate(chunks[:5])
+    )
+
+    client = get_client()
+    resp = await client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[
+            {"role": "system", "content": _CLASSIFY_PROMPT},
+            {"role": "user", "content": f"Question: {question}\n\nChunks:\n{context}"},
+        ],
+        temperature=0.0,
+        response_format={"type": "json_object"},
+    )
+    parsed = json.loads(resp.choices[0].message.content)
+    should_escalate = parsed.get("should_escalate", False)
+    reason = parsed.get("reason")
+    path = "escalate" if should_escalate else "answer"
+    print(f"[classify] → {path} | reason: {reason}")
+    return {
+        "should_escalate": should_escalate,
+        "escalation_reason": reason,
+    }
+
+
+_ANSWER_PROMPT = """You are an HR assistant. Answer the user's question using only the context provided.
+If the answer is not in the context, say you don't have that information.
+Be concise and factual."""
+
+
+async def answer(state: AgentState, config: RunnableConfig) -> dict:
+    question = state["question"]
+    chunks = state["retrieved_chunks"]
+
+    ranked = await rerank(
+        query=question,
+        documents=[c.content for c in chunks],
+        top_n=_TOP_K,
+    )
+
+    context_parts = []
+    sources: list[SourceChunk] = []
+    for r in ranked:
+        candidate = chunks[r.index]
+        location = f"p.{candidate.page_number}" if candidate.page_number else "unknown page"
+        context_parts.append(
+            f"[{len(sources)+1}] ({candidate.document_title}, {location})\n{candidate.content}"
+        )
+        sources.append(SourceChunk(
+            document_title=candidate.document_title,
+            page_number=candidate.page_number,
+            content=candidate.content,
+            rrf_score=round(candidate.rrf_score, 6),
+            relevance_score=round(r.relevance_score, 6),
+        ))
+
+    client = get_client()
+    completion = await client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[
+            {"role": "system", "content": _ANSWER_PROMPT},
+            {"role": "user", "content": f"Context:\n{'\n\n'.join(context_parts)}\n\nQuestion: {question}"},
+        ],
+        temperature=0.0,
+    )
+
+    return {
+        "answer": completion.choices[0].message.content,
+        "sources": sources,
+    }
+
+
+async def escalate(state: AgentState, config: RunnableConfig) -> dict:
+    reason = state.get("escalation_reason") or "The question could not be answered from the available documents."
+    return {
+        "answer": (
+            f"I wasn't able to find a reliable answer to your question. "
+            f"{reason} Please reach out to your HR team directly."
+        ),
+        "sources": [],
+    }
