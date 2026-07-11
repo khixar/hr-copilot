@@ -2,7 +2,7 @@
     {
         "question": "How many years of experience does the candidate have?",
         "expected_answer": "7+ years",
-        "expected_source_document": "Muhammad Khizar.pdf",
+        "expected_source_document": "candidate resume.pdf",
         "expected_page": 1,
         "should_retrieve": true
     },
@@ -16,14 +16,14 @@
     {
         "question": "Does the candidate have experience in remote settings?",
         "expected_answer": "Yes, Omni HR and ALL3D are remote companies",
-        "expected_source_document": "Muhammad Khizar.pdf",
+        "expected_source_document": "candidate resume.pdf",
         "expected_page": 1,
         "should_retrieve": true
     },
     {
         "question": "Does the candidate have experience in building and deploying applications in cloud environments?",
         "expected_answer": "Yes, ALL3D is a cloud-based application with deployment experience",
-        "expected_source_document": "Muhammad Khizar.pdf",
+        "expected_source_document": "candidate resume.pdf",
         "expected_page": 1,
         "should_retrieve": true
     },
@@ -51,21 +51,21 @@
     {
         "question": "Does candidate have experience in LLM integrations?",
         "expected_answer": "Yes, candidate has experience in LLM integrations",
-        "expected_source_document": "Muhammad Khizar.pdf",
+        "expected_source_document": "candidate resume.pdf",
         "expected_page": 1,
         "should_retrieve": true
     },
     {
         "question": "Does user has any AI certification",
         "expected_answer": "Yes, AWS Certified AI Practitioner certification",
-        "expected_source_document": "Muhammad Khizar.pdf",
+        "expected_source_document": "candidate resume.pdf",
         "expected_page": 3,
         "should_retrieve": true
     },
     {
         "question": "Does candidate have full stack experience?",
         "expected_answer": "Not explicitly mentioned",
-        "expected_source_document": "Muhammad Khizar.pdf",
+        "expected_source_document": "candidate resume.pdf",
         "expected_page": null,
         "should_retrieve": false
     }

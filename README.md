@@ -59,6 +59,7 @@ COHERE_API_KEY=...
 ```
 
 > `.env` is gitignored — never commit it.
+> The `POSTGRES_PASSWORD` and pgAdmin credentials (`admin@admin.com` / `admin` by default) are for local development only — change them before running this anywhere reachable outside your machine, since pgAdmin has no additional auth layer of its own.
 
 ### 2. Start services
 
