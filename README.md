@@ -1,4 +1,4 @@
-# HR Copilot
+# Enterpris Rag
 
 A multi-tenant RAG (Retrieval-Augmented Generation) system for HR document Q&A. Upload PDFs per tenant, ask questions in natural language, get accurate answers with source citations.
 
